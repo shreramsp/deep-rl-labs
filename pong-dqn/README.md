@@ -1,6 +1,6 @@
 # CMPE 260 Project 1: DQN on Atari Pong
 
-**Team:** Sankalp Wahane, Shreram Palanisamy
+**Team:** Shreram Palanisamy, Sankalp Wahane
 
 Starting from the DQN in *Deep Reinforcement Learning Hands-On*, Chapter 6 (replay buffer + target network + ε-greedy), we:
 1. established a baseline on a Tesla T4,
@@ -11,7 +11,7 @@ Environment: `PongNoFrameskip-v4` (the book's default). All runs: Google Colab, 
 
 ## Results
 
-**Convergence** = the 100-game mean reward first reaches ≥ 19.0. We report wall-clock time (measured with TensorBoard) and frames played. The assignment's "10% better than 10 minutes" is measured against **our own T4 baseline**: the book's 10-minute figure is not reproducible with this code (the author's own Chapter 7 logs show 87 minutes for basic DQN; see `results/RESULTS.md`).
+**Convergence** = the 100-game mean reward first exceeds 19.0. We report wall-clock time (measured with TensorBoard) and frames played. The assignment's "10% better than 10 minutes" is measured against **our own T4 baseline**: the book's 10-minute figure is not reproducible with this code (the author's own Chapter 7 logs show 87 minutes for basic DQN; see `results/RESULTS.md`).
 
 | Step | Algorithm | Script | Frames to 19 | Time to 19 | Mean reward | vs baseline (time) |
 |---|---|---|---|---|---|---|
@@ -37,7 +37,7 @@ Every run was on Colab with a Tesla T4. "Frames" are agent steps, as counted by 
 | 1 | **Baseline** (`1_baseline_dqn.py`) | The book's Chapter 6 DQN with **ε-greedy** exploration (ε 1.0 → 0.02 over 100k steps), replay buffer 10k, target sync every 1k steps, batch 32, training every step. Only ported to gymnasium; stop bound 19.0. | ✅ **19.03** in 1,507,440 frames, **3.958 hr** (~106 f/s) |
 | 2 | **NoisyNet, run 1** (`2a_noisynet_dqn.py --no-random-warmup`) | Replaced ε-greedy with NoisyNet layers, to explore where the network is unsure instead of blindly. Nothing else changed. | ❌ **Stalled at -20.6** after 345k frames (0.95 hr): a fresh NoisyNet pressed almost one button, so the warm-up buffer held ~one action. Stopped. |
 | 3 | **Bootstrapped DQN, run 1** (`experiments/2x_bootstrapped_dqn.py`) | Replaced ε-greedy with 10 heads; one random head plays each game. | ⚠️ Learning at the baseline's per-frame rate, but only **~60 f/s** (10 heads updated every step), projecting 6–7 hr. Stopped at 0.68 hr. |
-| 4 | **Bootstrapped DQN, tuned** (`--heads 5 --train-every 2 --batch-size 64`) | **Tuned for speed:** 5 heads instead of 10, and one training step every 2 frames with batch 64 (same samples per frame, half the training steps). Back to ~110 f/s. | ⚠️ Reached 16.7 at 1.03 hr, best **18.64**, then **plateaued at 17.8–18.6**: weaker heads kept pulling the 100-game mean down. Stopped at 3.01 hr, not solved. |
+| 4 | **Bootstrapped DQN, tuned** (`--heads 5 --train-every 2 --batch-size 64`) | **Tuned for speed:** 5 heads instead of 10, and one training step every 2 frames with batch 64 (same samples per frame, half the training steps). Back to ~110 f/s. | ⚠️ Reached 16.7 at 1.03 hr, best **18.64**, then **plateaued at 17.6–18.6**: weaker heads kept pulling the 100-game mean down. Stopped at 3.01 hr, not solved. |
 | 5 | **NoisyNet, run 2** (`2a_noisynet_dqn.py --train-every 2 --batch-size 64`) | **Fix:** uniform random actions during the 10k-frame warm-up only (the original DQN's replay start), plus the same training tuning as run 4. | ✅ **19.11** in **385,176 frames, 1.057 hr**: **3.74× faster** than the baseline |
 | 6 | **UCB Q-ensemble** (`2b_ucb_ensemble_dqn.py --heads 5 --train-every 2 --batch-size 64`) | **Fix for run 4's plateau:** same 5 heads, but every move uses all heads (mean + 0.1 × disagreement) instead of one random head per game. Same warm-up and tuning. | ✅ **19.03** in **568,001 frames, 1.438 hr**: **2.75× faster**, no plateau |
 | 7 | **NoisyNet + PER** (`3a_noisynet_per_dqn.py --train-every 2 --batch-size 64`) | Step 3: run 5 + prioritized experience replay (α 0.6, β 0.4 → 1.0, sum tree). Nothing else changed. | ⚠️ **19.02** in 580,539 frames, 1.813 hr: slower than run 5 (+51% frames) |
@@ -73,7 +73,7 @@ experiments/               Bootstrapped DQN, tried for 2b, plateaued (kept for t
 results/
   RESULTS.md               full lab notebook: every run, checkpoints, analysis
   NOISYNET.md, UCB.md      write-ups for Steps 2a/3a and 2b/3b
-  logs/                    training logs (each ends with "Solved in N frames!")
+  logs/                    training logs (solved runs end with "Solved in N frames!")
   tensorboard/<run>/       TensorBoard event files
   plots/<run>/             TensorBoard screenshots and graphs; plots/comparison/
   videos/                  trained agents playing one game

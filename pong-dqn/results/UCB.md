@@ -11,7 +11,7 @@
 | Run | Setting | Outcome |
 |---|---|---|
 | Untuned (`logs/2x_bootstrap_run1_untuned.log`) | K = 10, train every frame, batch 32 | Learned at the baseline's per-frame rate, but ran at only **~60 f/s** (vs ~110) because 10 heads are updated every step. Projected 6–7 hr, so it was stopped at 0.68 hr. |
-| Tuned (`logs/2x_bootstrap_tuned.log`) | K = 5, train every 2 frames, batch 64 | Back to ~110 f/s. Reached **16.7 at 1.03 hr** (the baseline needed ~3 hr), best **18.64**, then **plateaued at 17.75–18.64 for ~1.9 hr**. Stopped at 3.014 hr (1,197,825 frames, 18.50), **not solved**. |
+| Tuned (`logs/2x_bootstrap_tuned.log`) | K = 5, train every 2 frames, batch 64 | Back to ~110 f/s. Reached **16.7 at 1.03 hr** (the baseline needed ~3 hr), best **18.64**, then **plateaued at 17.6–18.6 for ~1.9 hr**. Stopped at 3.014 hr (1,197,825 frames, 18.50), **not solved**. |
 
 **Why it plateaued (diagnosis).** Each game is played by one randomly chosen head. The per-game reward graph (`plots/2x_bootstrap_tuned/reward_full_3.01hr.png`) shows games mostly at 18–21 with frequent dips to ~10 and occasionally to -8 or -15: weaker heads keep dragging the 100-game mean below 19. Osband et al. note that individual heads differ and that a vote across heads often beats any single head. That motivated switching to an algorithm that **acts with all heads at once**.
 
