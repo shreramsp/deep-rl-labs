@@ -222,14 +222,19 @@ if __name__ == "__main__":
                         help="Gradient step every N frames, default=1 (baseline)")
     parser.add_argument("--batch-size", type=int, default=BATCH_SIZE,
                         help="Replay batch size, default=%d (baseline)" % BATCH_SIZE)
+    parser.add_argument("--replay-size", type=int, default=REPLAY_SIZE,
+                        help="Replay buffer capacity, default=%d (baseline). Training still starts after "
+                             "REPLAY_START_SIZE steps; only the buffer's capacity changes" % REPLAY_SIZE)
     args = parser.parse_args()
     device = torch.device("cuda" if args.cuda else "cpu")
 
     # tag goes into the TensorBoard run name and model filename, so tuned and untuned runs never mix
     run_tag = "-ucb-k%d-l%g-te%d-b%d%s" % (args.heads, args.ucb_lambda, args.train_every, args.batch_size,
                                           "-nowarmup" if args.no_random_warmup else "-warmup")
-    print("Config: heads=%d, ucb_lambda=%g, random_warmup=%s, train_every=%d, batch_size=%d" % (
-        args.heads, args.ucb_lambda, not args.no_random_warmup, args.train_every, args.batch_size))
+    if args.replay_size != REPLAY_SIZE:
+        run_tag += "-r%d" % args.replay_size   # e.g. -r30000; default runs keep their original tag
+    print("Config: heads=%d, ucb_lambda=%g, random_warmup=%s, train_every=%d, batch_size=%d, replay_size=%d" % (
+        args.heads, args.ucb_lambda, not args.no_random_warmup, args.train_every, args.batch_size, args.replay_size))
 
     env = wrappers.make_env(args.env)
 
@@ -238,7 +243,7 @@ if __name__ == "__main__":
     writer = SummaryWriter(comment="-" + args.env + run_tag)
     print(net)
 
-    buffer = ExperienceBuffer(REPLAY_SIZE)
+    buffer = ExperienceBuffer(args.replay_size)
     agent = Agent(env, buffer, args.ucb_lambda)
 
     optimizer = optim.Adam(net.parameters(), lr=LEARNING_RATE)
