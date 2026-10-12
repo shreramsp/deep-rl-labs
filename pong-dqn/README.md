@@ -42,8 +42,19 @@ Every run was on Colab with a Tesla T4. "Frames" are agent steps, as counted by 
 | 6 | **UCB Q-ensemble** (`2b_ucb_ensemble_dqn.py --heads 5 --train-every 2 --batch-size 64`) | **Fix for run 4's plateau:** same 5 heads, but every move uses all heads (mean + 0.1 × disagreement) instead of one random head per game. Same warm-up and tuning. | ✅ **19.03** in **568,001 frames, 1.438 hr**: **2.75× faster**, no plateau |
 | 7 | **NoisyNet + PER** (`3a_noisynet_per_dqn.py --train-every 2 --batch-size 64`) | Step 3: run 5 + prioritized experience replay (α 0.6, β 0.4 → 1.0, sum tree). Nothing else changed. | ⚠️ **19.02** in 580,539 frames, 1.813 hr: slower than run 5 (+51% frames) |
 | 8 | **UCB + PER** (`3b_ucb_per_dqn.py --heads 5 --train-every 2 --batch-size 64`) | Step 3: run 6 + the same PER. Nothing else changed. | ✅ **19.01** in **542,750 frames** (**4.4% fewer** than run 6), 1.517 hr (5.5% more time) |
+| 9 | **Extra experiment: UCB + PER, 30K buffer** (`3b_ucb_per_dqn.py --heads 5 --train-every 2 --batch-size 64 --replay-size 30000`) | **Testing our explanation for PER's small gain:** we assumed the 10K buffer was too small for prioritization to matter, so we tripled it to 30,000. Nothing else changed. | ❌ **Slower:** at 559,677 frames (1.46 hr) it was still at **16.95**, already past the 542,750 frames the 10K version needed to reach 19. See below. |
 
 Logs for every run are in `results/logs/`, and TensorBoard files in `results/tensorboard/`.
+
+### Extra experiment: a larger replay buffer for PER
+
+**Assumption.** PER helped only a little, and we thought the reason was the small 10,000-transition buffer: with it, uniform sampling already replays every transition about 32 times, so prioritization has little left to fix. A larger buffer should give PER more to choose from.
+
+**What we did.** We re-ran UCB + PER with the buffer tripled to **30,000**, changing nothing else (run 9).
+
+**Result.** It did not help. After 559,677 frames and 1.46 hours, the 100-game mean was **16.95**, while the 10,000-buffer version had already reached 19 at 542,750 frames (1.517 hr). Our reading: a larger buffer keeps older experience from earlier, weaker play around for longer, so the agent keeps learning from outdated games, and that slowdown outweighs any extra benefit from prioritization. For this setup, the book's 10,000 buffer worked best.
+
+![UCB + PER with a 30K buffer: 100-game mean reward](results/plots/3b_ucb_per_r30k/reward_100.png)
 
 ## Team contributions
 

@@ -262,3 +262,13 @@ Progress (monitor log): 0.381 hr 136k -18.99 · 0.549 hr 193k -17.38 · 0.708 hr
 `beta` rose linearly from 0.4 to 1.0 over the first 100k frames, as designed (screenshot).
 Screenshots: `results/plots/3b_ucb_per/` (beta, reward, reward_100, speed, training_log_solved, nvidia_smi).
 Artifacts: `results/{logs,tensorboard}/3b_ucb_per*`.
+
+## Extra experiment: UCB + PER with a 30,000 buffer (`3b_ucb_per_dqn.py --replay-size 30000`)
+
+**Assumption.** PER's small gain was due to the small 10k buffer (uniform sampling already replays each transition ~32 times), so a larger buffer should let PER help more.
+
+**Setup.** Identical to Step 3b (5 heads, λ = 0.1, random warm-up, train every 2, batch 64, α 0.6, β 0.4 → 1 over 100k), with only the buffer changed to 30,000 (warm-up still 10k). Run name `Oct12_20-54-43_8586dbc91f82-PongNoFrameskip-v4-ucb-per-k5-l0.1-te2-b64-warmup-r30000`, Tesla T4.
+
+**Result (TensorBoard, `results/plots/3b_ucb_per_r30k/reward_100.png`).** At **559,677 frames / 1.459 hr** the 100-game mean was **16.95**, not yet 19, and already past the 542,750 frames the 10k version needed to solve (1.517 hr). **The larger buffer did not help.**
+
+**Interpretation.** A larger buffer retains older transitions from earlier, weaker policies for longer, so training samples are more outdated (off-policy staleness), and this slows learning more than prioritization gains. For this setup the book's 10k buffer was the better choice.
