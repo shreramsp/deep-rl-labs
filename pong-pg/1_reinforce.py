@@ -13,7 +13,9 @@
 # winning a point more likely, and every move before losing a point less likely.
 #
 # Defaults = plain REINFORCE. Tuning flags (all off by default):
-#   --lr, --games-per-update, --entropy-beta, --return-norm, --grad-clip
+#   --lr, --games-per-update, --entropy-beta, --return-norm, --grad-clip,
+#   --point-returns (a move's return stops at the next point scored, as in
+#   Karpathy's "Pong from Pixels", 2016: each point is judged on its own)
 # ============================================================================
 import argparse
 import time
@@ -34,10 +36,14 @@ GAMMA = 0.99
 CHUNK = 1024  # states per forward/backward pass; only limits GPU memory, the math is unchanged
 
 
-def discounted_returns(rewards, gamma):
-    """G_t = r_t + gamma*r_{t+1} + gamma^2*r_{t+2} + ... to the end of the game (book's calc_qvals)."""
+def discounted_returns(rewards, gamma, reset_on_point=False):
+    """G_t = r_t + gamma*r_{t+1} + gamma^2*r_{t+2} + ... to the end of the game (book's calc_qvals).
+    reset_on_point: in Pong a reward is non-zero only when a point ends, so restarting the sum there
+    makes each move's return depend only on the point it belongs to (Karpathy, 2016)."""
     out, running = [], 0.0
     for r in reversed(rewards):
+        if reset_on_point and r != 0:
+            running = 0.0
         running = r + gamma * running
         out.append(running)
     return out[::-1]
@@ -60,6 +66,8 @@ if __name__ == "__main__":
     p.add_argument("--return-norm", choices=["none", "mean", "meanstd"], default="none",
                    help="Subtract the batch mean return (and divide by its std) before the update")
     p.add_argument("--grad-clip", type=float, default=0.0, help="Clip the gradient norm (0 = off)")
+    p.add_argument("--point-returns", action="store_true",
+                   help="End each move's return at the next point scored (Pong-specific, Karpathy 2016)")
     p.add_argument("--seed", type=int, default=None)
     args = p.parse_args()
     device = torch.device("cuda" if args.cuda else "cpu")
@@ -74,6 +82,8 @@ if __name__ == "__main__":
         tag += "-norm" + args.return_norm
     if args.grad_clip > 0:
         tag += "-clip%g" % args.grad_clip
+    if args.point_returns:
+        tag += "-pt"
     print("Config:", tag, vars(args), flush=True)
 
     env = wrappers.make_env(args.env)
@@ -110,7 +120,7 @@ if __name__ == "__main__":
             continue
 
         # ---- a game just ended ----
-        batch_returns.extend(discounted_returns(ep_rewards, GAMMA))
+        batch_returns.extend(discounted_returns(ep_rewards, GAMMA, args.point_returns))
         ep_rewards = []
         games_in_batch += 1
         total_rewards.append(ep_reward_sum)

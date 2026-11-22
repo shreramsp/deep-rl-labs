@@ -3,21 +3,23 @@
 Same workflow as Project 1: one Colab notebook per run, **Runtime → Change runtime type → T4 GPU**.
 Every notebook clones the code from this public GitHub repo, so the code that was run is the code in the repo.
 
-## First batch: 4 notebooks, started together
+## All runs
 
-| Notebook name | What it tests | Training line (cell 2) |
-|---|---|---|
-| `Pong2_reinforce_untuned` | Plain REINFORCE, the required baseline | `!nohup python 1_reinforce.py --cuda --max-hours 4 > training.log 2>&1 &` |
-| `Pong2_reinforce_norm` | Tuning 1: scale the returns in each batch | `!nohup python 1_reinforce.py --cuda --return-norm meanstd --max-hours 4 > training.log 2>&1 &` |
-| `Pong2_a2c_untuned` | A2C with the book's settings | `!nohup python 2_a2c.py --cuda --max-hours 6 > training.log 2>&1 &` |
-| `Pong2_a2c_lr0.003` | Tuning 1: the author's best learning rate | `!nohup python 2_a2c.py --cuda --lr 0.003 --max-hours 6 > training.log 2>&1 &` |
+Two Colab sessions at a time. Start the **Next** rows first; each round pairs runs with the same time cap,
+so both sessions free up together.
 
-## Later runs (started as sessions free up)
-
-| Notebook name | What it tests | Training line (cell 2) |
-|---|---|---|
-| `Pong2_a2c_b32` | Tuning 2: learn from 32 moves at a time instead of 128 (4x more updates) | `!nohup python 2_a2c.py --cuda --batch-size 32 --max-hours 6 > training.log 2>&1 &` |
-| `Pong2_reinforce_lr0.001` | Tuning 2: 10x larger learning rate | `!nohup python 1_reinforce.py --cuda --lr 0.001 --max-hours 4 > training.log 2>&1 &` |
+| Round | Notebook name | What it tests | Status | Training line (cell 2) |
+|---|---|---|---|---|
+| 1 | `Pong2_reinforce_untuned` | Plain REINFORCE, the required baseline | Done: -20.31 after 4 h, never learned | `!nohup python 1_reinforce.py --cuda --max-hours 4 > training.log 2>&1 &` |
+| 1 | `Pong2_reinforce_norm` | Rescale the returns in each batch | Stopped at 2.1 h: -20.46, no learning | `!nohup python 1_reinforce.py --cuda --return-norm meanstd --max-hours 4 > training.log 2>&1 &` |
+| 2 | `Pong2_a2c_untuned` | A2C with the default settings | **Solved: 19.06 in 7,958,200 frames, 3.48 h** | `!nohup python 2_a2c.py --cuda --max-hours 6 > training.log 2>&1 &` |
+| 2 | `Pong2_a2c_lr0.003` | Learning rate 3x | Stopped at 2.6 h: -20.3, no learning | `!nohup python 2_a2c.py --cuda --lr 0.003 --max-hours 6 > training.log 2>&1 &` |
+| 3 | `Pong2_a2c_b32` | Learn from 32 moves at a time instead of 128 | Done: -20.40 after 6 h, never learned | `!nohup python 2_a2c.py --cuda --batch-size 32 --max-hours 6 > training.log 2>&1 &` |
+| 3 | `Pong2_reinforce_lr0.001` | Learning rate 10x | Done: collapsed, every game -21 | `!nohup python 1_reinforce.py --cuda --lr 0.001 --max-hours 4 > training.log 2>&1 &` |
+| 4 | `Pong2_reinforce_lr0.001_ent0.01` | Fix the collapse: the same bigger steps plus an exploration bonus | **Next** | `!nohup python 1_reinforce.py --cuda --lr 0.001 --entropy-beta 0.01 --max-hours 4 > training.log 2>&1 &` |
+| 4 | `Pong2_reinforce_lr0.001_ent0.01_pt` | The row above plus per-point returns: each move is judged only by the point it belongs to | **Next** | `!nohup python 1_reinforce.py --cuda --lr 0.001 --entropy-beta 0.01 --point-returns --max-hours 4 > training.log 2>&1 &` |
+| 5 | `Pong2_a2c_lr0.002` | A learning rate between the one that worked (0.001) and the one that failed (0.003) | Planned | `!nohup python 2_a2c.py --cuda --lr 0.002 --max-hours 6 > training.log 2>&1 &` |
+| 5 | `Pong2_a2c_n8` | 8-step returns instead of 4, so real points reach the learning signal sooner | Planned | `!nohup python 2_a2c.py --cuda --reward-steps 8 --max-hours 6 > training.log 2>&1 &` |
 
 Each run stops by itself when the 100-game mean passes 19.0 ("Solved in N frames!"),
 or when it hits the time cap ("Stopped: time limit ...").
