@@ -12,6 +12,13 @@ Every notebook clones the code from this public GitHub repo, so the code that wa
 | `Pong2_a2c_untuned` | A2C with the book's settings | `!nohup python 2_a2c.py --cuda --max-hours 6 > training.log 2>&1 &` |
 | `Pong2_a2c_lr0.003` | Tuning 1: the author's best learning rate | `!nohup python 2_a2c.py --cuda --lr 0.003 --max-hours 6 > training.log 2>&1 &` |
 
+## Later runs (started as sessions free up)
+
+| Notebook name | What it tests | Training line (cell 2) |
+|---|---|---|
+| `Pong2_a2c_b32` | Tuning 2: learn from 32 moves at a time instead of 128 (4x more updates) | `!nohup python 2_a2c.py --cuda --batch-size 32 --max-hours 6 > training.log 2>&1 &` |
+| `Pong2_reinforce_lr0.001` | Tuning 2: 10x larger learning rate | `!nohup python 1_reinforce.py --cuda --lr 0.001 --max-hours 4 > training.log 2>&1 &` |
+
 Each run stops by itself when the 100-game mean passes 19.0 ("Solved in N frames!"),
 or when it hits the time cap ("Stopped: time limit ...").
 
@@ -27,8 +34,9 @@ or when it hits the time cap ("Stopped: time limit ...").
 ## Cell 2: start training
 Paste the one training line for this notebook from the table above. Then check it started:
 ```python
-!sleep 60; head -n 1 training.log; tail -n 3 training.log
+!sleep 180; head -n 1 training.log; tail -n 3 training.log
 ```
+It waits 3 minutes because A2C plays 50 games at once, so its first score line appears only after 2-3 minutes.
 
 ## Cell 3: TensorBoard
 ```python
