@@ -10,5 +10,6 @@ Coursework for **CMPE 260 Reinforcement Learning, San José State University, Fa
 | Folder | Project | Highlights |
 |---|---|---|
 | [`pong-dqn/`](pong-dqn/) | DQN on Atari Pong | ε-greedy baseline vs. NoisyNet and UCB Q-ensemble exploration, plus Prioritized Experience Replay |
+| [`pong-pg/`](pong-pg/) | Policy gradients on Atari Pong | REINFORCE baseline and tuning, A2C, and a comparison with DQN (in progress) |
 
 Each project folder is self-contained, with its own README, code, results, and contribution details.
