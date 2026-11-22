@@ -41,27 +41,31 @@ Graphs to watch: `reward_100` (the 100-game mean), `entropy` (1.79 = still press
 Prints progress every 5 minutes so Colab sees an active cell and does not disconnect,
 and copies the log, TensorBoard files and best model to Google Drive each time,
 so nothing is lost if the session dies anyway. It stops when the run finishes.
+**Set `RUN` to this notebook's name**, or two notebooks will back up into the same Drive folder.
 ```python
-RUN = "Pong2_reinforce_untuned"          # change to this notebook's name
+RUN = "Pong2_reinforce_untuned"          # MUST match this notebook's name
 
 import time, subprocess, os
 from google.colab import drive
 drive.mount('/content/drive')
 BACKUP = "/content/drive/MyDrive/" + RUN
 os.makedirs(BACKUP, exist_ok=True)
-start = time.time()
 while True:
     tail = subprocess.run(["tail", "-n", "2", "training.log"], capture_output=True, text=True).stdout
-    print(time.strftime("%H:%M"), "| %.2f h elapsed |" % ((time.time() - start) / 3600), tail.strip(), flush=True)
+    print(time.strftime("%H:%M"), "|", tail.strip(), flush=True)
     os.system(f"cp -r runs *.dat training.log '{BACKUP}/' 2>/dev/null")
     if "Solved" in tail or "Stopped" in tail:
         print("DONE. Results are in Google Drive:", BACKUP)
         break
-    if subprocess.run(["pgrep", "-f", "python [12]_"], capture_output=True).returncode != 0:
-        print("WARNING: training is not running anymore. Check training.log")
+    if "Error" in tail or "Traceback" in tail:
+        print("WARNING: training crashed. Check training.log")
+        break
+    if time.time() - os.path.getmtime("training.log") > 1200:
+        print("WARNING: training.log has not changed for 20 minutes, so training has stopped. Check training.log")
         break
     time.sleep(300)
 ```
+The training prints a line after every game, so a log that stops growing means the training stopped.
 
 ## Keep the Mac awake
 Colab runs in the browser tab, so the Mac must not sleep. In Terminal, before leaving it:
