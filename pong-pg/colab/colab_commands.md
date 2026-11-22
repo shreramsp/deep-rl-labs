@@ -38,9 +38,9 @@ Paste the one training line for this notebook from the table above. Then check i
 Graphs to watch: `reward_100` (the 100-game mean), `entropy` (1.79 = still pressing buttons at random), `speed`.
 
 ## Cell 4: keep-alive monitor (run last and leave it running)
-Prints progress every 5 minutes so Colab sees an active cell and does not disconnect,
-and copies the log, TensorBoard files and best model to Google Drive each time,
-so nothing is lost if the session dies anyway. It stops when the run finishes.
+Prints the latest training line every 2 minutes so Colab always sees an active, printing cell,
+and copies the log, TensorBoard files and best model to Google Drive every 10 minutes.
+It only stops when the run finishes ("Solved" or "Stopped") or the training has crashed.
 **Set `RUN` to this notebook's name**, or two notebooks will back up into the same Drive folder.
 ```python
 RUN = "Pong2_reinforce_untuned"          # MUST match this notebook's name
@@ -50,20 +50,21 @@ from google.colab import drive
 drive.mount('/content/drive')
 BACKUP = "/content/drive/MyDrive/" + RUN
 os.makedirs(BACKUP, exist_ok=True)
+i = 0
 while True:
-    tail = subprocess.run(["tail", "-n", "2", "training.log"], capture_output=True, text=True).stdout
-    print(time.strftime("%H:%M"), "|", tail.strip(), flush=True)
-    os.system(f"cp -r runs *.dat training.log '{BACKUP}/' 2>/dev/null")
+    tail = subprocess.run(["tail", "-n", "1", "training.log"], capture_output=True, text=True).stdout.strip()
+    print(time.strftime("%H:%M"), "|", tail, flush=True)
+    if i % 5 == 0:                                   # every 10 minutes
+        os.system(f"cp -r runs *.dat training.log '{BACKUP}/' 2>/dev/null")
     if "Solved" in tail or "Stopped" in tail:
+        os.system(f"cp -r runs *.dat training.log '{BACKUP}/' 2>/dev/null")
         print("DONE. Results are in Google Drive:", BACKUP)
         break
-    if "Error" in tail or "Traceback" in tail:
-        print("WARNING: training crashed. Check training.log")
+    if "Error" in tail or time.time() - os.path.getmtime("training.log") > 1200:
+        print("WARNING: training has stopped (crash, or no new log line for 20 minutes). Check training.log")
         break
-    if time.time() - os.path.getmtime("training.log") > 1200:
-        print("WARNING: training.log has not changed for 20 minutes, so training has stopped. Check training.log")
-        break
-    time.sleep(300)
+    i += 1
+    time.sleep(120)
 ```
 The training prints a line after every game, so a log that stops growing means the training stopped.
 
