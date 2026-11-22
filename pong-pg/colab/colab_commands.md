@@ -16,10 +16,11 @@ so both sessions free up together.
 | 2 | `Pong2_a2c_lr0.003` | Learning rate 3x | Stopped at 2.6 h: -20.3, no learning | `!nohup python 2_a2c.py --cuda --lr 0.003 --max-hours 6 > training.log 2>&1 &` |
 | 3 | `Pong2_a2c_b32` | Learn from 32 moves at a time instead of 128 | Done: -20.40 after 6 h, never learned | `!nohup python 2_a2c.py --cuda --batch-size 32 --max-hours 6 > training.log 2>&1 &` |
 | 3 | `Pong2_reinforce_lr0.001` | Learning rate 10x | Done: collapsed, every game -21 | `!nohup python 1_reinforce.py --cuda --lr 0.001 --max-hours 4 > training.log 2>&1 &` |
-| 4 | `Pong2_reinforce_lr0.001_ent0.01` | Fix the collapse: the same bigger steps plus an exploration bonus | **Next** | `!nohup python 1_reinforce.py --cuda --lr 0.001 --entropy-beta 0.01 --max-hours 4 > training.log 2>&1 &` |
-| 4 | `Pong2_reinforce_lr0.001_ent0.01_pt` | The row above plus per-point returns: each move is judged only by the point it belongs to | **Next** | `!nohup python 1_reinforce.py --cuda --lr 0.001 --entropy-beta 0.01 --point-returns --max-hours 4 > training.log 2>&1 &` |
-| 5 | `Pong2_a2c_lr0.002` | A learning rate between the one that worked (0.001) and the one that failed (0.003) | Planned | `!nohup python 2_a2c.py --cuda --lr 0.002 --max-hours 6 > training.log 2>&1 &` |
-| 5 | `Pong2_a2c_n8` | 8-step returns instead of 4, so real points reach the learning signal sooner | Planned | `!nohup python 2_a2c.py --cuda --reward-steps 8 --max-hours 6 > training.log 2>&1 &` |
+| 4 | `Pong2_reinforce_lr0.001_ent0.01` | Fix the collapse: the same bigger steps plus an exploration bonus | Stopped at ~2.1 h by a Colab disconnect: -20.29, no collapse, no learning | `!nohup python 1_reinforce.py --cuda --lr 0.001 --entropy-beta 0.01 --max-hours 4 > training.log 2>&1 &` |
+| 4 | `Pong2_reinforce_lr0.001_ent0.01_pt` | The row above plus per-point returns: each move is judged only by the point it belongs to | Stopped at ~2.1 h by a Colab disconnect: -20.34, no learning | `!nohup python 1_reinforce.py --cuda --lr 0.001 --entropy-beta 0.01 --point-returns --max-hours 4 > training.log 2>&1 &` |
+| 5 | `Pong2_reinforce_pt_norm` | Best shot for REINFORCE: per-point returns + rescaled returns (a simple baseline) + exploration bonus, 6 h | **Next** | `!nohup python 1_reinforce.py --cuda --lr 0.001 --entropy-beta 0.01 --point-returns --return-norm meanstd --max-hours 6 > training.log 2>&1 &` |
+| 5 | `Pong2_a2c_lr0.002` | A learning rate between the one that worked (0.001) and the one that failed (0.003) | **Next** | `!nohup python 2_a2c.py --cuda --lr 0.002 --max-hours 6 > training.log 2>&1 &` |
+| 6 | `Pong2_a2c_n8` | 8-step returns instead of 4, so real points reach the learning signal sooner | Planned | `!nohup python 2_a2c.py --cuda --reward-steps 8 --max-hours 6 > training.log 2>&1 &` |
 
 Each run stops by itself when the 100-game mean passes 19.0 ("Solved in N frames!"),
 or when it hits the time cap ("Stopped: time limit ...").
