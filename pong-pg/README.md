@@ -15,10 +15,14 @@ Settings are the same as Project 1: `PongNoFrameskip-v4`, the Project 1 wrappers
 | `lib/wrappers.py` | Atari preprocessing, identical to Project 1 |
 | `lib/pg_models.py` | Policy network (REINFORCE) and actor-critic network (A2C) |
 | `colab/colab_commands.md` | Exact Colab cells for every run |
+| `results/tensorboard/Pong2_*/` | TensorBoard file of every run, one folder per Colab notebook |
+| `results/logs/Pong2_*.log` | Full training log of every run |
+| `results/plots/` | Report graphs (A2C, REINFORCE, DQN vs REINFORCE vs A2C), drawn by `tools/plot_runs.py` |
+| `tools/plot_runs.py` | Redraws the graphs from the TensorBoard files (needs matplotlib, no TensorFlow) |
 
 Both scripts take `--max-hours` to cap a run, save the best model as a `.dat` file, and log to TensorBoard (`runs/`).
 
-Results will be added here as the runs finish.
+Final results for every run are in the run table in `colab/colab_commands.md`; a results summary will be added here.
 
 ## References
 1. Williams, R. J. (1992). Simple statistical gradient-following algorithms for connectionist reinforcement learning. *Machine Learning*, 8.
