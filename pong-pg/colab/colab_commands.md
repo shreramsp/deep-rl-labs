@@ -5,10 +5,10 @@ Every notebook clones the code from this public GitHub repo, so the code that wa
 
 ## All runs
 
-Two Colab sessions at a time. Start the **Next** rows first; each round pairs runs with the same time cap,
-so both sessions free up together.
+All 14 runs are finished. This table is the record of exactly what ran: the notebook name, the command, and
+the final result of each run. The results summary is in the [README](../README.md).
 
-| Round | Notebook name | What it tests | Status | Training line (cell 2) |
+| Round | Notebook name | What it tests | Result | Training line (cell 2) |
 |---|---|---|---|---|
 | 1 | `Pong2_reinforce_untuned` | Plain REINFORCE, the required baseline | Done: −20.27 after 4 h (5,183,019 frames, 5,587 games), never learned | `!nohup python 1_reinforce.py --cuda --max-hours 4 > training.log 2>&1 &` |
 | 1 | `Pong2_reinforce_norm` | Rescale the returns in each batch | Stopped at 3.51 h: −20.36 (4,971,022 frames), no learning | `!nohup python 1_reinforce.py --cuda --return-norm meanstd --max-hours 4 > training.log 2>&1 &` |
