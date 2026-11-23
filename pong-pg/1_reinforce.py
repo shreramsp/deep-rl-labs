@@ -15,7 +15,9 @@
 # Defaults = plain REINFORCE. Tuning flags (all off by default):
 #   --lr, --games-per-update, --entropy-beta, --return-norm, --grad-clip,
 #   --point-returns (a move's return stops at the next point scored, as in
-#   Karpathy's "Pong from Pixels", 2016: each point is judged on its own)
+#   Karpathy's "Pong from Pixels", 2016: each point is judged on its own),
+#   --two-actions (only UP and DOWN, as in Karpathy 2016; Pong's 6 buttons are
+#   really 3 moves, stay/up/down, so the policy has fewer useless choices)
 # ============================================================================
 import argparse
 import time
@@ -32,6 +34,7 @@ from lib.pg_models import PolicyNet
 
 DEFAULT_ENV_NAME = "PongNoFrameskip-v4"
 MEAN_REWARD_BOUND = 19.0
+TWO_ACTIONS = [2, 3]  # Pong's RIGHT (paddle up) and LEFT (paddle down), the two Karpathy used
 GAMMA = 0.99
 CHUNK = 1024  # states per forward/backward pass; only limits GPU memory, the math is unchanged
 
@@ -68,6 +71,8 @@ if __name__ == "__main__":
     p.add_argument("--grad-clip", type=float, default=0.0, help="Clip the gradient norm (0 = off)")
     p.add_argument("--point-returns", action="store_true",
                    help="End each move's return at the next point scored (Pong-specific, Karpathy 2016)")
+    p.add_argument("--two-actions", action="store_true",
+                   help="Use only UP and DOWN instead of all 6 buttons (Karpathy 2016)")
     p.add_argument("--seed", type=int, default=None)
     args = p.parse_args()
     device = torch.device("cuda" if args.cuda else "cpu")
@@ -84,12 +89,16 @@ if __name__ == "__main__":
         tag += "-clip%g" % args.grad_clip
     if args.point_returns:
         tag += "-pt"
+    if args.two_actions:
+        tag += "-a2"
     print("Config:", tag, vars(args), flush=True)
 
     env = wrappers.make_env(args.env)
     if args.seed is not None:
         env.reset(seed=args.seed)
-    net = PolicyNet(env.observation_space.shape, env.action_space.n).to(device)
+    # The network picks an index; with --two-actions, index 0/1 is pressed as button 2/3.
+    buttons = TWO_ACTIONS if args.two_actions else list(range(env.action_space.n))
+    net = PolicyNet(env.observation_space.shape, len(buttons)).to(device)
     optimizer = optim.Adam(net.parameters(), lr=args.lr)
     writer = SummaryWriter(comment="-%s-%s" % (args.env, tag))
     print(net)
@@ -109,7 +118,7 @@ if __name__ == "__main__":
         with torch.no_grad():
             logits = net(torch.from_numpy(np.asarray(state)).unsqueeze(0).to(device))
             action = int(torch.distributions.Categorical(logits=logits).sample().item())
-        new_state, reward, terminated, truncated, _ = env.step(action)
+        new_state, reward, terminated, truncated, _ = env.step(buttons[action])
         frame_idx += 1
         batch_states.append(to_uint8(state))
         batch_actions.append(action)
@@ -179,7 +188,7 @@ if __name__ == "__main__":
         optimizer.step()
         update_idx += 1
 
-        writer.add_scalar("entropy", ent_sum / n, frame_idx)        # ln 6 = 1.79 means fully random
+        writer.add_scalar("entropy", ent_sum / n, frame_idx)        # fully random: ln 6 = 1.79 (ln 2 = 0.69 with --two-actions)
         writer.add_scalar("loss_policy", pol_sum, frame_idx)
         writer.add_scalar("return_mean", raw_mean, frame_idx)
         writer.add_scalar("return_std", float(np.std(batch_returns)), frame_idx)
