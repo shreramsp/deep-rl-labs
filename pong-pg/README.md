@@ -74,6 +74,15 @@ Settings are the same as Project 1: `PongNoFrameskip-v4`, the Project 1 wrappers
 2. **A critic vs whole games.** A2C's critic lets it judge each move after a few steps and update every 128 moves. REINFORCE waits for whole games and learns from their noisy final score, so it gets few, weak updates.
 3. **Bias vs variance.** REINFORCE's returns are unbiased but very noisy. DQN's max over noisy Q-values overestimates (van Hasselt et al., 2016). A2C accepts a small bias from its critic in exchange for much lower variance, the best balance on Pong.
 
+## Team contributions
+
+| Part | Contributor |
+|---|---|
+| **REINFORCE**: baseline and all tuning runs (`1_reinforce.py`) | **Sankalp Wahane** |
+| **A2C**: baseline and all tuning runs (`2_a2c.py`) | **Shreram Palanisamy** |
+
+Code was developed with the assistance of an AI coding tool (Claude Code). Every design decision and its source is documented in this README and in `colab/colab_commands.md`.
+
 ## Files
 
 | File | What it is |
@@ -91,6 +100,20 @@ Settings are the same as Project 1: `PongNoFrameskip-v4`, the Project 1 wrappers
 | `presentation/CMPE260_Project2_Presentation.pptx` | Class presentation (11 slides) |
 
 Both scripts take `--max-hours` to cap a run, save the best model as a `.dat` file, and log to TensorBoard (`runs/`).
+
+## How to run
+
+```bash
+git clone https://github.com/shreramsp/deep-rl-labs.git && cd deep-rl-labs/pong-pg
+pip install torch "gymnasium[atari]" ale-py opencv-python-headless tensorboardX
+python 1_reinforce.py --cuda --max-hours 4        # plain REINFORCE (Pong2_reinforce_untuned)
+python 2_a2c.py --cuda --max-hours 6              # A2C with the reference defaults (Pong2_a2c_untuned)
+python 2_a2c.py --cuda --lr 0.002 --max-hours 6   # tuned A2C (Pong2_a2c_lr0.002)
+tensorboard --logdir results/tensorboard          # view our recorded runs
+python tools/plot_runs.py                         # redraw the graphs (needs matplotlib)
+```
+
+The exact command of every run is in `colab/colab_commands.md`. Each script stops on its own when the 100-game mean exceeds 19.0 or the `--max-hours` cap is reached, saving the best model as a `.dat` file. Model files are excluded from git.
 
 ## References
 1. Williams, R. J. (1992). Simple statistical gradient-following algorithms for connectionist reinforcement learning. *Machine Learning*, 8.
